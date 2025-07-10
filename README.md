@@ -482,3 +482,284 @@ Send a JSON object in the following format:
 - **JWT Token:** Valid for 1 day (`expiresIn: '1d'`).
 - **Default Status:** New captains are registered as inactive.
 - **Response Filtering:** Password field is never returned (`select: false` in schema).
+
+---
+
+# Captain Login Endpoint Documentation
+
+## Endpoint
+
+**POST** `/captains/login`
+
+## Description
+
+Authenticates a captain using email and password. Returns a JWT token and captain data. Sets a cookie with the token.
+
+## Request Body
+
+Send a JSON object in the following format:
+
+```json
+{
+  "email": "captain@example.com",
+  "password": "securepass123"
+}
+```
+
+### Field Requirements
+
+- `email` (string, required, must be a valid email format)
+- `password` (string, required, min 6 characters)
+
+## Responses
+
+### Success
+
+- **Status:** `200 OK`
+- **Body:**
+  ```json
+  {
+    "token": "<jwt_token>",
+    "captain": {
+      "_id": "<captain_id>",
+      "email": "captain@example.com",
+      "status": "inactive",
+      "vehicle": {
+        "color": "blue",
+        "plate": "XYZ789",
+        "capacity": 3,
+        "vehicleType": "car"
+      }
+    }
+  }
+  ```
+
+#### Example Response
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjY2NjY2NjY2NjY2NjY2NjY2NiIsImlhdCI6MTY5MDAwMDAwMH0.abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567",
+  "captain": {
+    "_id": "666666666666666666666666",
+    "email": "captain@example.com",
+    "status": "inactive",
+    "vehicle": {
+      "color": "blue",
+      "plate": "XYZ789",
+      "capacity": 3,
+      "vehicleType": "car"
+    }
+  }
+}
+```
+
+### Validation Error
+
+- **Status:** `400 Bad Request`
+- **Body:**
+  ```json
+  {
+    "errors": [
+      {
+        "msg": "Invalid Email",
+        "param": "email",
+        "location": "body"
+      }
+    ]
+  }
+  ```
+
+### Invalid Credentials
+
+- **Status:** `400 Bad Request`
+- **Body:**
+  ```json
+  {
+    "message": "Invalid email or password"
+  }
+  ```
+
+### Other Errors
+
+- **Status:** `500 Internal Server Error`
+- **Body:**
+  ```json
+  {
+    "error": "Error message"
+  }
+  ```
+
+## Notes
+
+- Email and password are required.
+- Password is compared using bcrypt.
+- Token expires in 1 day (`expiresIn: '1d'`).
+- Cookie is set with the token.
+
+---
+
+# Captain Profile Endpoint Documentation
+
+## Endpoint
+
+**GET** `/captains/profile`
+
+## Description
+
+Retrieves the profile information of the currently authenticated captain. Requires a valid JWT token.
+
+## Authentication
+
+This endpoint requires authentication. Include the JWT token in one of the following ways:
+
+- **Authorization Header:** `Authorization: Bearer <jwt_token>`
+- **Cookie:** `token=<jwt_token>`
+
+## Request Body
+
+No request body required.
+
+## Responses
+
+### Success
+
+- **Status:** `200 OK`
+- **Body:**
+  ```json
+  {
+    "captain": {
+      "_id": "<captain_id>",
+      "fullname": {
+        "firstname": "John",
+        "lastname": "Doe"
+      },
+      "email": "captain@example.com",
+      "vehicle": {
+        "color": "blue",
+        "plate": "XYZ789",
+        "capacity": 3,
+        "vehicleType": "car"
+      },
+      "status": "inactive"
+    }
+  }
+  ```
+
+#### Example Response
+
+```json
+{
+  "captain": {
+    "_id": "666666666666666666666666",
+    "fullname": {
+      "firstname": "John",
+      "lastname": "Doe"
+    },
+    "email": "captain@example.com",
+    "vehicle": {
+      "color": "blue",
+      "plate": "XYZ789",
+      "capacity": 3,
+      "vehicleType": "car"
+    },
+    "status": "inactive"
+  }
+}
+```
+
+### Unauthorized
+
+- **Status:** `401 Unauthorized`
+- **Body:**
+  ```json
+  {
+    "error": "Unauthorized"
+  }
+  ```
+
+### Other Errors
+
+- **Status:** `500 Internal Server Error`
+- **Body:**
+  ```json
+  {
+    "error": "Error message"
+  }
+  ```
+
+## Notes
+
+- Authentication is required via JWT token.
+- Returns the full captain object including vehicle details.
+- Password field is never returned (`select: false` in schema).
+
+---
+
+# Captain Logout Endpoint Documentation
+
+## Endpoint
+
+**GET** `/captains/logout`
+
+## Description
+
+Logs out the currently authenticated captain by clearing the token cookie and adding the token to a blacklist.
+
+## Authentication
+
+This endpoint requires authentication. Include the JWT token in one of the following ways:
+
+- **Authorization Header:** `Authorization: Bearer <jwt_token>`
+- **Cookie:** `token=<jwt_token>`
+
+## Request Body
+
+No request body required.
+
+## Responses
+
+### Success
+
+- **Status:** `200 OK`
+- **Body:**
+  ```json
+  {
+    "message": "Logged out successfully"
+  }
+  ```
+
+#### Example Response
+
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+### Unauthorized
+
+- **Status:** `401 Unauthorized`
+- **Body:**
+  ```json
+  {
+    "message": "Unauthorized"
+  }
+  ```
+
+### Other Errors
+
+- **Status:** `500 Internal Server Error`
+- **Body:**
+  ```json
+  {
+    "error": "Error message"
+  }
+  ```
+
+## Notes
+
+- Invalidates the JWT token by adding it to blacklist.
+- Blacklisted tokens auto-expire in 1 day (`expires: '1d'` in schema).
+- Clears the authentication cookie.
+
+---
