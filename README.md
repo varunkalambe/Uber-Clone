@@ -340,3 +340,145 @@ No request body required.
 - The token cookie is cleared from the browser.
 - The token is added to a blacklist to prevent future use.
 - After logout, the token becomes invalid for all future requests.
+
+---
+
+# Captain Registration Endpoint Documentation
+
+## Endpoint
+
+**POST** `/captain/register`
+
+## Description
+
+Registers a new captain with required personal and vehicle information. Returns a JWT token and captain data upon successful registration.
+
+## Request Body
+
+Send a JSON object in the following format:
+
+```json
+{
+  "fullname": {
+    "firstname": "John",
+    "lastname": "Doe"
+  },
+  "email": "john.doe@example.com",
+  "password": "securepass123",
+  "vehicle": {
+    "color": "blue",
+    "plate": "XYZ789",
+    "capacity": 3,
+    "vehicleType": "car"
+  }
+}
+```
+
+### Field Requirements
+
+- `fullname.firstname` (string, required, min 3 characters)
+- `fullname.lastname` (string, required)
+- `email` (string, required, must be a valid email)
+- `password` (string, required, min 6 characters)
+- `vehicle.color` (string, required, min 3 characters)
+- `vehicle.plate` (string, required, min 3 characters)
+- `vehicle.capacity` (number, required, min 1)
+- `vehicle.vehicleType` (string, required, one of: `car`, `motorcycle`, `auto`)
+
+## Responses
+
+### Success
+
+- **Status:** `201 Created`
+- **Body:**
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "captain": {
+      "_id": "665a1f2b3c4d5e6f7a8b9c0d",
+      "fullname": {
+        "firstname": "John",
+        "lastname": "Doe"
+      },
+      "email": "john.doe@example.com",
+      "vehicle": {
+        "color": "blue",
+        "plate": "XYZ789",
+        "capacity": 3,
+        "vehicleType": "car"
+      },
+      "status": "inactive"
+    }
+  }
+  ```
+
+#### Example Response
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "captain": {
+    "_id": "665a1f2b3c4d5e6f7a8b9c0d",
+    "fullname": {
+      "firstname": "John",
+      "lastname": "Doe"
+    },
+    "email": "john.doe@example.com",
+    "vehicle": {
+      "color": "blue",
+      "plate": "XYZ789",
+      "capacity": 3,
+      "vehicleType": "car"
+    },
+    "status": "inactive"
+  }
+}
+```
+
+### Validation Error
+
+- **Status:** `400 Bad Request`
+- **Body:**
+  ```json
+  {
+    "errors": [
+      {
+        "msg": "Color must be at least of 3 characters",
+        "param": "vehicle.color",
+        "location": "body"
+      },
+      {
+        "msg": "Vehicle type must be car, motorcycle or auto",
+        "param": "vehicle.vehicleType",
+        "location": "body"
+      }
+    ]
+  }
+  ```
+
+### Email Conflict
+
+- **Status:** `400 Bad Request`
+- **Body:**
+  ```json
+  {
+    "message": "Captain already exists with this email"
+  }
+  ```
+
+### Missing Fields Error
+
+- **Status:** `400 Bad Request`
+- **Body:**
+  ```json
+  {
+    "message": "All fields are required"
+  }
+  ```
+
+## Notes
+
+- **Password Security:** Passwords are hashed using bcrypt before storage.
+- **JWT Token:** Valid for 1 day (`expiresIn: '1d'`).
+- **Default Status:** New captains are registered as inactive.
+- **Response Filtering:** Password field is never returned (`select: false` in schema).
